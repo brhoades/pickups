@@ -33,4 +33,6 @@ def get_hostmask(user):
 
 def get_topic(conv):
     """Return IRC topic for a conversation."""
+    if conv == None:
+        return "Unknown"
     return 'Hangouts conversation: {}'.format(get_conv_name(conv))

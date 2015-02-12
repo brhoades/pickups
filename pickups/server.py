@@ -112,7 +112,8 @@ class Server(object):
                 conv = util.channel_to_conversation(channel, self._conv_list)
                 client.sent_messages.append(message[1:])
                 segments = hangups.ChatMessageSegment.from_str(message[1:])
-                asyncio.async(conv.send_message(segments))
+                if conv is not None:
+                    asyncio.async(conv.send_message(segments))
             elif line.startswith('JOIN'):
                 channel = line.split(' ')[1]
                 conv = util.channel_to_conversation(channel, self._conv_list)
@@ -125,8 +126,9 @@ class Server(object):
                 if channel not in self.clientsChannels[client.nickname]:
                     self.clientsChannels[client.nickname].append( channel )
                 client.topic(channel, util.get_topic(conv))
-                client.list_nicks(channel,
-                                  (util.get_nick(user) for user in conv.users))
+                if conv is not None:
+                    client.list_nicks(channel,
+                                      (util.get_nick(user) for user in conv.users))
             elif line.startswith('WHO'):
                 query = line.split(' ')[1]
                 if query.startswith('#'):
