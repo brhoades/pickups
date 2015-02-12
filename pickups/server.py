@@ -56,6 +56,7 @@ class Server(object):
             # join if we aren't there
             for client in self.clients.values( ):
                 if channel not in self.clientsChannels[client.nickname]:
+                    self.clientsChannels[client.nickname].append( channel )
                     client.join( channel ) 
 
             for client in self.clients.values():
@@ -121,7 +122,8 @@ class Server(object):
                 # RPL_NAMREPLY), which MUST include the user joining.
                 client.write(util.get_nick(self._user_list._self_user),
                              'JOIN', channel)
-                self.clientsChannels[client.nickname].append( channel )
+                if channel not in self.clientsChannels[client.nickname]:
+                    self.clientsChannels[client.nickname].append( channel )
                 client.topic(channel, util.get_topic(conv))
                 client.list_nicks(channel,
                                   (util.get_nick(user) for user in conv.users))
