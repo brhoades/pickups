@@ -54,6 +54,15 @@ class Server(object):
                 else:
                     client.privmsg(hostmask, channel, conv_event.text)
 
+            # invite us if we aren't there
+            for client in self.clients.values():
+                for user in conv.users:
+                    if util.get_nick(user) == client.nickname:
+                        break
+                else:
+                    client.swrite(irc.RPL_WELCOME, [ ':INVITE ', client.nickname, ' ', channel ].str( ))
+
+
     # Client Callbacks
 
     def _on_client_connect(self, client_reader, client_writer):
