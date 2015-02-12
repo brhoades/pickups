@@ -115,20 +115,21 @@ class Server(object):
                 if conv is not None:
                     asyncio.async(conv.send_message(segments))
             elif line.startswith('JOIN'):
-                channel = line.split(' ')[1]
-                conv = util.channel_to_conversation(channel, self._conv_list)
-                # If a JOIN is successful, the user receives a JOIN message as
-                # confirmation and is then sent the channel's topic (using
-                # RPL_TOPIC) and the list of users who are on the channel (using
-                # RPL_NAMREPLY), which MUST include the user joining.
-                client.write(util.get_nick(self._user_list._self_user),
-                             'JOIN', channel)
-                if channel not in self.clientsChannels[client.nickname]:
-                    self.clientsChannels[client.nickname].append( channel )
-                client.topic(channel, util.get_topic(conv))
-                if conv is not None:
-                    client.list_nicks(channel,
-                                      (util.get_nick(user) for user in conv.users))
+                channels = line.split(' ')[1].split(',')
+                for channel in channels:
+                    conv = util.channel_to_conversation(channel, self._conv_list)
+                    # If a JOIN is successful, the user receives a JOIN message as
+                    # confirmation and is then sent the channel's topic (using
+                    # RPL_TOPIC) and the list of users who are on the channel (using
+                    # RPL_NAMREPLY), which MUST include the user joining.
+                    client.write(util.get_nick(self._user_list._self_user),
+                                 'JOIN', channel)
+                    if channel not in self.clientsChannels[client.nickname]:
+                        self.clientsChannels[client.nickname].append( channel )
+                    client.topic(channel, util.get_topic(conv))
+                    if conv is not None:
+                        client.list_nicks(channel,
+                                          (util.get_nick(user) for user in conv.users))
             elif line.startswith('WHO'):
                 query = line.split(' ')[1]
                 if query.startswith('#'):
