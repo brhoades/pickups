@@ -6,6 +6,7 @@ import hangups.auth
 
 from . import irc, util
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -15,6 +16,7 @@ class Server(object):
         self.clients = {}
         self._hangups = hangups.Client(cookies)
         self._hangups.on_connect.add_observer(self._on_hangups_connect)
+        self.clientsChannels = { }
 
     def run(self, host, port):
         loop = asyncio.get_event_loop()
@@ -47,20 +49,21 @@ class Server(object):
             sender = util.get_nick(user)
             hostmask = util.get_hostmask(user)
             channel = util.conversation_to_channel(conv)
+            if channel is None:
+                return
             message = conv_event.text
+
+            # join if we aren't there
+            for client in self.clients.values( ):
+                if channel not in self.clientsChannels[client.nickname]:
+                    client.join( channel ) 
+
             for client in self.clients.values():
                 if message in client.sent_messages and sender == client.nickname:
                     client.sent_messages.remove(message)
                 else:
                     client.privmsg(hostmask, channel, conv_event.text)
 
-            # invite us if we aren't there
-            for client in self.clients.values():
-                for user in conv.users:
-                    if util.get_nick(user) == client.nickname:
-                        break
-                else:
-                    client.swrite(irc.RPL_WELCOME, [ ':INVITE ', client.nickname, ' ', channel ].str( ))
 
 
     # Client Callbacks
@@ -118,6 +121,7 @@ class Server(object):
                 # RPL_NAMREPLY), which MUST include the user joining.
                 client.write(util.get_nick(self._user_list._self_user),
                              'JOIN', channel)
+                self.clientsChannels[client.nickname].append( channel )
                 client.topic(channel, util.get_topic(conv))
                 client.list_nicks(channel,
                                   (util.get_nick(user) for user in conv.users))
@@ -126,6 +130,10 @@ class Server(object):
                 if query.startswith('#'):
                     conv = util.channel_to_conversation(channel,
                                                          self._conv_list)
+                    if conv is None:
+                        self.swrite(RPL_ENDOFWHO, query, ':Unknown Channel')
+                        return
+
                     responses = [{
                         'channel': query,
                         'user': util.get_nick(user),
@@ -140,6 +148,7 @@ class Server(object):
                 welcomed = True
                 client.swrite(irc.RPL_WELCOME, ':Welcome to pickups!')
                 client.tell_nick(util.get_nick(self._user_list._self_user))
+                self.clientsChannels[client.nickname] = []
 
                 # Sending the MOTD seems be required for Pidgin to connect.
                 client.swrite(irc.RPL_MOTDSTART,
