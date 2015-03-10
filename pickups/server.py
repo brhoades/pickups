@@ -90,7 +90,11 @@ class Server(object):
 
         while True:
             line = yield from client.readline()
-            line = line.decode('utf-8').strip('\r\n')
+            try:
+                line = line.decode('utf-8').strip('\r\n')
+            except:
+                logger.info("Bad data received (SSL enabled?)")
+                continue
 
             if not line:
                 logger.info("Connection lost")
