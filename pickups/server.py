@@ -146,6 +146,16 @@ class Server(object):
                         'real_name': user.full_name,
                     } for user in conv.users]
                     client.who(query, responses)
+            elif line.startswith('MODE'):
+                query = line.split(' ')[1]
+                if query.startswith('#'):
+                    conv = util.channel_to_conversation(channel,
+                                                         self._conv_list)
+
+                    self.swrite(RPL_CHANNELMODEIS, query, '')
+                    if conv is None:
+                    return
+
             elif line.startswith('PING'):
                 client.pong()
 
