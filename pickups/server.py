@@ -140,7 +140,7 @@ class Server(object):
                     conv = util.channel_to_conversation(channel,
                                                          self._conv_list)
                     if conv is None:
-                        client.swrite(RPL_ENDOFWHO, query, ':Unknown Channel')
+                        client.swrite(irc.RPL_ENDOFWHO, query, ':Unknown Channel')
                         return
 
                     responses = [{
@@ -156,7 +156,7 @@ class Server(object):
                     conv = util.channel_to_conversation(channel,
                                                          self._conv_list)
 
-                    client.swrite(RPL_CHANNELMODEIS, query, '')
+                    client.swrite(irc.RPL_CHANNELMODEIS, query, '')
 
             elif line.startswith('PING'):
                 client.pong()
