@@ -153,8 +153,6 @@ class Server(object):
                                                          self._conv_list)
 
                     self.swrite(RPL_CHANNELMODEIS, query, '')
-                    if conv is None:
-                    return
 
             elif line.startswith('PING'):
                 client.pong()
