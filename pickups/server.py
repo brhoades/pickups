@@ -114,8 +114,12 @@ class Server(object):
             elif line.startswith('PRIVMSG'):
                 channel, message = line.split(' ', 2)[1:]
                 conv = util.channel_to_conversation(channel, self._conv_list)
-                client.sent_messages.append(message[1:])
-                segments = hangups.ChatMessageSegment.from_str(message[1:])
+
+                if message[0] == ":":
+                  message = message[1:]
+
+                client.sent_messages.append(message)
+                segments = hangups.ChatMessageSegment.from_str(message)
                 if conv is not None:
                     asyncio.async(conv.send_message(segments))
             elif line.startswith('JOIN'):
