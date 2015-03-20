@@ -17,6 +17,7 @@ class Server(object):
         self._hangups = hangups.Client(cookies)
         self._hangups.on_connect.add_observer(self._on_hangups_connect)
         self.clientsChannels = { }
+        self.connected = False
 
     def run(self, host, port):
         loop = asyncio.get_event_loop()
@@ -39,6 +40,7 @@ class Server(object):
             initial_data.sync_timestamp
         )
         self._conv_list.on_event.add_observer(self._on_hangups_event)
+        self.connected = True
         logger.info('Hangups connected. Connect your IRC clients!')
 
     def _on_hangups_event(self, conv_event):
@@ -166,6 +168,9 @@ class Server(object):
                 client.pong()
 
             if not welcomed and client.nickname and username:
+                if not self.connected:
+                    client.swrite( irc.RPL_WELCOME, ':server has not connected to hangups yet!' )
+                    return
                 welcomed = True
                 client.swrite(irc.RPL_WELCOME, ':Welcome to pickups!')
                 client.tell_nick(util.get_nick(self._user_list._self_user))
