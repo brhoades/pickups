@@ -4,19 +4,19 @@ from hangups.ui.utils import get_conv_name
 import hashlib
 import re
 
-def conversation_to_channel(conv):
+def conversation_to_channel(conv, lookup=False):
     """Return channel name for hangups.Conversation."""
     # Must be 50 characters max and not contain space or comma.
     name = get_conv_name(conv).replace(',', '').replace(' ', '_')
     return '#{}'.format(name[:50 - 3])
 
 
-def channel_to_conversation(channel, conv_list):
+def channel_to_conversation(channel, server):
     """Return hangups.Conversation for channel name."""
-    for conv in conv_list.get_all():
-        if ''.join( [ '#', get_conv_name(conv).replace(',', '').replace( ' ', '_' ) ] ) == channel:
-            return conv 
+    if channel in server.channelToConv:
+        return server.channelToConv[channel]
     else:
+        print( "ERROR: Conversation for " + channel + " does not exist" )
         return None
 
 

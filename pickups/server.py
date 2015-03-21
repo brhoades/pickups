@@ -3,6 +3,7 @@ import logging
 
 import hangups
 import hangups.auth
+from hangups.ui.utils import get_conv_name
 
 from . import irc, util
 
@@ -17,6 +18,7 @@ class Server(object):
         self._hangups = hangups.Client(cookies)
         self._hangups.on_connect.add_observer(self._on_hangups_connect)
         self.clientsChannels = { }
+        self.channelToConv = { }
         self.connected = False
 
     def run(self, host, port):
@@ -90,8 +92,26 @@ class Server(object):
         username = None
         welcomed = False
 
+        # construct a hash of channels to conversations
+        for conv in self._conv_list.get_all():
+            if util.conversation_to_channel( conv ) in self.channelToConv:
+                tries = 2
+                name = ""
+                while True:
+                    name = ''.join( [ util.conversation_to_channel( conv ), str( tries ) ] )
+                    if name not in self.channelToConv:
+                        break
+                    tries += 1
+                self.channelToConv[name] = conv 
+            else:
+                self.channelToConv[util.conversation_to_channel( conv )] = conv
+
         while True:
             line = yield from client.readline()
+
+            for chan in self.channelToConv:
+                print( chan ) 
+
             try:
                 line = line.decode('utf-8').strip('\r\n')
             except:
