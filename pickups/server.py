@@ -98,7 +98,7 @@ class Server(object):
                 tries = 2
                 name = ""
                 while True:
-                    name = ''.join( [ util.conversation_to_channel( conv ), str( tries ) ] )
+                    name = ''.join( [ util.conversation_to_channel( conv ), '_', str( tries ) ] )
                     if name not in self.channelToConv:
                         break
                     tries += 1
