@@ -44,6 +44,10 @@ class Server(object):
         )
         self._conv_list.on_event.add_observer(self._on_hangups_event)
         self.connected = True
+
+        # construct a hash of channels to conversations
+        for conv in self._conv_list.get_all():
+            self.new_channel( conv )
         logger.info('Hangups connected. Connect your IRC clients!')
 
     def _on_hangups_event(self, conv_event):
@@ -93,15 +97,8 @@ class Server(object):
         username = None
         welcomed = False
 
-        # construct a hash of channels to conversations
-        for conv in self._conv_list.get_all():
-            self.new_channel( conv )
-
         while True:
             line = yield from client.readline()
-
-            for chan, val in self.convIdLookup.items( ):
-                print( chan, ":\t", val ) 
 
             try:
                 line = line.decode('utf-8').strip('\r\n')
