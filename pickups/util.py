@@ -13,8 +13,12 @@ def conversation_to_channel(conv, lookup=False):
 
 def channel_to_conversation(channel, server):
     """Return hangups.Conversation for channel name."""
-    if channel in server.channelToConv:
-        return server.channelToConv[channel]
+    if channel in server.convIdLookup:
+        for id, chan in server.convIdLookup.items( ):
+            if chan == channel:
+                for conv in server._conv_list.get_all():
+                    if conv.id_ == id:
+                        return conv
     else:
         print( "ERROR: Conversation for " + channel + " does not exist" )
         return None

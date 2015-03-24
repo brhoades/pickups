@@ -18,7 +18,8 @@ class Server(object):
         self._hangups = hangups.Client(cookies)
         self._hangups.on_connect.add_observer(self._on_hangups_connect)
         self.clientsChannels = { }
-        self.channelToConv = { }
+        self.convIdLookup = { }
+        self.channelLookup = { }
         self.connected = False
 
     def run(self, host, port):
@@ -52,7 +53,7 @@ class Server(object):
             user = conv.get_user(conv_event.user_id)
             sender = util.get_nick(user)
             hostmask = util.get_hostmask(user)
-            channel = util.conversation_to_channel(conv)
+            channel = self.get_channel(conv)
             if channel is None:
                 return
             message = conv_event.text
@@ -94,23 +95,13 @@ class Server(object):
 
         # construct a hash of channels to conversations
         for conv in self._conv_list.get_all():
-            if util.conversation_to_channel( conv ) in self.channelToConv:
-                tries = 2
-                name = ""
-                while True:
-                    name = ''.join( [ util.conversation_to_channel( conv ), '_', str( tries ) ] )
-                    if name not in self.channelToConv:
-                        break
-                    tries += 1
-                self.channelToConv[name] = conv 
-            else:
-                self.channelToConv[util.conversation_to_channel( conv )] = conv
+            self.new_channel( conv )
 
         while True:
             line = yield from client.readline()
 
-            for chan in self.channelToConv:
-                print( chan ) 
+            for chan, val in self.convIdLookup.items( ):
+                print( chan, ":\t", val ) 
 
             try:
                 line = line.decode('utf-8').strip('\r\n')
@@ -129,7 +120,7 @@ class Server(object):
                 username = line.split(' ', 1)[1]
             elif line.startswith('LIST'):
                 info = (
-                    (util.conversation_to_channel(conv), len(conv.users),
+                    (self.get_channel(conv), len(conv.users),
                      util.get_topic(conv)) for conv in self._conv_list.get_all()
                 )
                 client.list_channels(info)
@@ -147,7 +138,7 @@ class Server(object):
             elif line.startswith('JOIN'):
                 channels = line.split(' ')[1].split(',')
                 for channel in channels:
-                    conv = util.channel_to_conversation(channel, self._conv_list)
+                    conv = util.channel_to_conversation(channel, self)
                     # If a JOIN is successful, the user receives a JOIN message as
                     # confirmation and is then sent the channel's topic (using
                     # RPL_TOPIC) and the list of users who are on the channel (using
@@ -164,7 +155,7 @@ class Server(object):
                 query = line.split(' ')[1]
                 if query.startswith('#'):
                     conv = util.channel_to_conversation(channel,
-                                                         self._conv_list)
+                                                         self)
                     if conv is None:
                         client.swrite(irc.RPL_ENDOFWHO, query, ':Unknown Channel')
                         return
@@ -180,7 +171,7 @@ class Server(object):
                 query = line.split(' ')[1]
                 if query.startswith('#'):
                     conv = util.channel_to_conversation(channel,
-                                                         self._conv_list)
+                                                         self)
 
                     client.swrite(irc.RPL_CHANNELMODEIS, query, '')
 
@@ -201,3 +192,29 @@ class Server(object):
                               ':- pickups Message of the Day - ')
                 client.swrite(irc.RPL_MOTD, ':- insert MOTD here')
                 client.swrite(irc.RPL_ENDOFMOTD, ':End of MOTD command')
+
+    def new_channel( self, conv ):
+        """ Creates a new channel for this conversation in our lookup hash. """
+        if conv.id_ in self.convIdLookup:
+            tries = 2
+            name = ""
+            while True:
+                name = ''.join( [ util.conversation_to_channel( conv ), '_', str( tries ) ] )
+                if name not in self.channelToConv.values ( ):
+                    break
+                tries += 1
+            self.convIdLookup[conv.id_] = name 
+            return name
+
+        self.convIdLookup[conv.id_] = util.conversation_to_channel( conv )
+        return util.conversation_to_channel( conv )
+
+        
+
+    def get_channel( self, conv ):
+        """ Returns the channel name of this conversation from a hash lookup. If a name doesn't exist, one is assigned. """ 
+        name = conv.id_
+        if name in self.convIdLookup:
+            return self.convIdLookup[name]
+        else:
+            return new_channel( conv )
