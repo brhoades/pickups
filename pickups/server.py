@@ -123,7 +123,7 @@ class Server(object):
                 client.list_channels(info)
             elif line.startswith('PRIVMSG'):
                 channel, message = line.split(' ', 2)[1:]
-                conv = util.channel_to_conversation(channel, self._conv_list)
+                conv = util.channel_to_conversation(channel, self)
 
                 if message[0] == ":":
                   message = message[1:]
