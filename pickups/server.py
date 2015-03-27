@@ -214,4 +214,4 @@ class Server(object):
         if name in self.convIdLookup:
             return self.convIdLookup[name]
         else:
-            return new_channel( conv )
+            return self.new_channel( conv )
