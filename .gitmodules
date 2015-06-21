@@ -1,0 +1,3 @@
+[submodule "pickups/miniircd"]
+	path = pickups/miniircd
+	url = git@github.com:jrosdahl/miniircd.git
