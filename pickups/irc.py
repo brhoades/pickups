@@ -15,6 +15,8 @@ RPL_MOTD = 372
 RPL_MOTDSTART = 375
 RPL_ENDOFMOTD = 376
 
+ERR_NOSUCHCHANNEL = 403
+
 
 logger = logging.getLogger(__name__)
 

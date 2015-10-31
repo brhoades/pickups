@@ -11,9 +11,9 @@ from . import irc, util
 logger = logging.getLogger(__name__)
 
 
-class Server(object):
+class Server:
 
-    def __init__(self, host='localhost', port='6667', cookies=None):
+    def __init__(self, cookies=None, ascii_smileys=False):
         self.clients = {}
         self._hangups = hangups.Client(cookies)
         self._hangups.on_connect.add_observer(self._on_hangups_connect)
@@ -21,6 +21,7 @@ class Server(object):
         self.convIdLookup = { }
         self.channelLookup = { }
         self.connected = False
+        self.ascii_smileys = ascii_smileys
 
     def run(self, host, port):
         loop = asyncio.get_event_loop()
@@ -72,7 +73,9 @@ class Server(object):
                 if message in client.sent_messages and sender == client.nickname:
                     client.sent_messages.remove(message)
                 else:
-                    client.privmsg(hostmask, channel, conv_event.text)
+                    if self.ascii_smileys:
+                        message = util.smileys_to_ascii(message)
+                    client.privmsg(hostmask, channel, message)
 
 
 
@@ -118,7 +121,8 @@ class Server(object):
             elif line.startswith('LIST'):
                 info = (
                     (self.get_channel(conv), len(conv.users),
-                     util.get_topic(conv)) for conv in self._conv_list.get_all()
+                     util.get_topic(conv)) 
+                    for conv in self._conv_list.get_all()
                 )
                 client.list_channels(info)
             elif line.startswith('PRIVMSG'):
@@ -146,6 +150,9 @@ class Server(object):
                         self.clientsChannels[client.nickname].append( channel )
                     client.topic(channel, util.get_topic(conv))
                     if conv is not None:
+                        client.swrite(irc.ERR_NOSUCHCHANNEL,
+                                ':{}: Channel not found'.format(channel))
+                    else:
                         client.list_nicks(channel,
                                           (util.get_nick(user) for user in conv.users))
             elif line.startswith('WHO'):
@@ -154,24 +161,34 @@ class Server(object):
                     conv = util.channel_to_conversation(channel,
                                                          self)
                     if conv is None:
-                        client.swrite(irc.RPL_ENDOFWHO, query, ':Unknown Channel')
-                        return
-
-                    responses = [{
-                        'channel': query,
-                        'user': util.get_nick(user),
-                        'nick': util.get_nick(user),
-                        'real_name': user.full_name,
-                    } for user in conv.users]
-                    client.who(query, responses)
+                        client.swrite(irc.ERR_NOSUCHCHANNEL,
+                                ":{}: Channel not found'.format(channel))
+                    else:
+                        responses = [{
+                            'channel': query,
+                            'user': util.get_nick(user),
+                            'nick': util.get_nick(user),
+                            'real_name': user.full_name,
+                        } for user in conv.users]
+                        client.who(query, responses)
             elif line.startswith('MODE'):
                 query = line.split(' ')[1]
                 if query.startswith('#'):
                     conv = util.channel_to_conversation(channel,
                                                          self)
-
                     client.swrite(irc.RPL_CHANNELMODEIS, query, '')
-
+                                                         self._conv_list)
+                    if conv is None:
+                        client.swrite(irc.ERR_NOSUCHCHANNEL,
+                                ':{}: Channel not found'.format(channel))
+                    else:
+                        responses = [{
+                            'channel': query,
+                            'user': util.get_nick(user),
+                            'nick': util.get_nick(user),
+                            'real_name': user.full_name,
+                        } for user in conv.users]
+                        client.who(query, responses)
             elif line.startswith('PING'):
                 client.pong()
 
