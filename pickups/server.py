@@ -162,7 +162,8 @@ class Server:
                                                          self)
                     if conv is None:
                         client.swrite(irc.ERR_NOSUCHCHANNEL,
-                                ":{}: Channel not found'.format(channel))
+                                ':{}: Channel not found'.format(channel))
+
                     else:
                         responses = [{
                             'channel': query,
@@ -177,7 +178,6 @@ class Server:
                     conv = util.channel_to_conversation(channel,
                                                          self)
                     client.swrite(irc.RPL_CHANNELMODEIS, query, '')
-                                                         self._conv_list)
                     if conv is None:
                         client.swrite(irc.ERR_NOSUCHCHANNEL,
                                 ':{}: Channel not found'.format(channel))

@@ -22,9 +22,11 @@ if __name__ == '__main__':
     parser.add_argument('--port', help='bind port', default=6667)
     parser.add_argument('--ascii-smileys', action='store_true',
                         help='display smileys in ascii')
-    parser.add_argument('--cookies-path', help='path to hangups cookies', default=default_cookes_path)
+    parser.add_argument('--cookies-path', help='path to hangups cookies', 
+            default=default_cookies_path)
     args = parser.parse_args()
 
     cookiedata = hangups.auth.get_auth_stdin(args.cookies_path)
 
-    Server(cookies=cookiedata, args.ascii_smileys).run(args.address, args.port)
+    Server(cookies=cookiedata, ascii_smileys=args.ascii_smileys).run(
+            args.address, args.port)
