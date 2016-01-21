@@ -147,7 +147,7 @@ class Server:
                     if channel not in self.clientsChannels[client.nickname]:
                         self.clientsChannels[client.nickname].append( channel )
                     client.topic(channel, util.get_topic(conv))
-                    if conv is not None:
+                    if conv is None:
                         client.swrite(irc.ERR_NOSUCHCHANNEL,
                                 ':{}: Channel not found'.format(channel))
                     else:
