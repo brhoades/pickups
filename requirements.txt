@@ -1,2 +1,1 @@
--e git+https://github.com/xxinfinityxx/robobrowser.git#egg=robobrowser
-hangups
+hangups<0.4
