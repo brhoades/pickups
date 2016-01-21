@@ -158,7 +158,7 @@ class Server:
                 if query.startswith('#'):
                     conv = util.channel_to_conversation(channel,
                                                          self)
-                    if conv is None:
+                    if conv is None or not conv.hasattr(a, 'users'):
                         client.swrite(irc.ERR_NOSUCHCHANNEL,
                                 ':{}: Channel not found'.format(channel))
 
