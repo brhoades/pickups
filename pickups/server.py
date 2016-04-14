@@ -19,7 +19,6 @@ class Server:
         self._hangups.on_connect.add_observer(self._on_hangups_connect)
         self.clientsChannels = { }
         self.convIdLookup = { }
-        self.channelLookup = { }
         self.connected = False
         self.ascii_smileys = ascii_smileys
 
@@ -154,6 +153,8 @@ class Server:
                         client.list_nicks(channel,
                                           (util.get_nick(user) for user in conv.users))
             elif line.startswith('WHO'):
+                print("WHO")
+                print(line)
                 query = line.split(' ')[1]
                 if query.startswith('#'):
                     conv = util.channel_to_conversation(channel,
@@ -170,6 +171,27 @@ class Server:
                             'real_name': user.full_name,
                         } for user in conv.users]
                         client.who(query, responses)
+                else: # user
+                    found = False
+                    for channel in self.clientsChannels[client.nickname]:
+                        conv = util.channel_to_conversation(channel, self)
+                        for user in conv.users:
+                            if util.get_nick(user) == query:
+                                # do shit
+                                responses = [{'channel': channel,
+                                              'user': util.get_nick(user),
+                                              'nick':util.get_nick(user),
+                                              'real_name': user.full_name
+                                            }]
+                                # same response
+                                client.who(query, responses)
+                                found = True
+                                break
+                        if found:
+                            break
+                    else:
+                        client.swrite(irc.ERR_NOSUCHCHANNEL,
+                                ':{}: User not found'.format(query))
             elif line.startswith('MODE'):
                 query = line.split(' ')[1]
                 if query.startswith('#'):
